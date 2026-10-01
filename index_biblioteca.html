@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Biblioteca · Préstamos</title>
+<style>
+:root{--bg:#eef1ee;--fg:#16242b;--mut:#5a6a70;--card:#fff;--line:#d5dcd8;--ac:#1f6f5c;--acfg:#fff;--stamp:#b23a2e;--warn:#9a5b00;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11191d;--fg:#e6ecea;--mut:#9aabaf;--card:#1a262b;--line:#2c3b41;--ac:#4fb59c;--acfg:#0b1512;--stamp:#ff8f80;--warn:#f0b35a}}
+:root[data-theme="dark"]{--bg:#11191d;--fg:#e6ecea;--mut:#9aabaf;--card:#1a262b;--line:#2c3b41;--ac:#4fb59c;--acfg:#0b1512;--stamp:#ff8f80;--warn:#f0b35a}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,.titulo{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+header h1{font-size:clamp(1.8rem,5vw,2.6rem);margin:0 0 4px;line-height:1.1}
+header p{margin:0;color:var(--mut)}
+.resumen{display:flex;gap:10px;margin:18px 0 14px;flex-wrap:wrap}
+.resumen span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:.92rem}
+.resumen b{font-variant-numeric:tabular-nums}
+.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.barra input{flex:1 1 220px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit}
+.chips{display:flex;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:7px 14px;font:inherit;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ac);color:var(--acfg);border-color:var(--ac)}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+#catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;padding:0;margin:0;list-style:none}
+.libro{background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;overflow:hidden;min-height:132px}
+.lomo{width:54px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Georgia,serif;font-size:1.5rem;font-weight:700}
+.info{padding:12px 14px;display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.titulo{font-size:1.12rem;font-weight:700;line-height:1.25;margin:0}
+.autor{color:var(--mut);font-size:.9rem}
+.estado{font-size:.88rem;margin-top:auto;padding-top:6px}
+.estado.libre{color:var(--ac);font-weight:600}
+.estado.prestado{color:var(--fg)}.estado.vencido{color:var(--stamp);font-weight:600}
+.estado small{display:block;color:var(--mut);font-weight:400}
+.btn{align-self:flex-start;margin-top:8px;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;background:var(--ac);color:var(--acfg)}
+.btn.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.vacio{grid-column:1/-1;text-align:center;color:var(--mut);padding:32px 0}
+dialog{border:0;border-radius:14px;padding:0;width:min(440px,calc(100% - 24px));background:var(--card);color:var(--fg);box-shadow:0 12px 40px #0006}
+dialog::backdrop{background:#0008}
+.modal{padding:20px}
+.modal h2{margin:0 0 2px;font-size:1.4rem}
+.modal label{display:block;font-weight:600;margin-top:14px;font-size:.95rem}
+.modal input[type=text]{width:100%;padding:10px 12px;margin-top:4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+.modal input[type=range]{width:100%;accent-color:var(--ac);margin-top:8px}
+.dias{display:flex;justify-content:space-between;align-items:baseline}
+.dias output{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+.rapidos{display:flex;gap:6px;margin-top:6px}
+.rapidos .chip{padding:4px 12px;font-size:.88rem}
+.sello{margin:16px 0 4px;border:2px dashed var(--stamp);color:var(--stamp);border-radius:8px;padding:10px 14px;text-align:center;transform:rotate(-1.2deg)}
+.sello small{display:block;font-size:.8rem;letter-spacing:.02em}
+.sello strong{font-family:Georgia,serif;font-size:1.25rem;text-transform:capitalize}
+.error{color:var(--stamp);min-height:1.4em;margin:8px 0 0;font-size:.92rem}
+.acciones{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.sel{display:flex;align-items:center;gap:6px;font-size:.92rem}.sel select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit}
+.etiquetas{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.tag{font-size:.78rem;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--mut)}
+.modal input[aria-invalid=true]{border-color:var(--stamp)}
+.pag{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin:20px 0 4px}
+.pag .chip{min-width:42px}.pag .chip:disabled{opacity:.4;cursor:default}
+.pag .chip[aria-current="page"]{background:var(--ac);color:var(--acfg);border-color:var(--ac)}
+.hint{display:none;text-align:center;margin:6px 0 0}
+@media (pointer:coarse){.hint{display:block}}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--fg);border-color:var(--ac)}
+.fila{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--ac);border-radius:10px;padding:10px 14px;margin-bottom:10px;flex-wrap:wrap}
+.fila.pronto{border-left-color:var(--warn)}.fila.vencido{border-left-color:var(--stamp)}
+.fila .datos{flex:1 1 220px;min-width:0}.fila .cuando{font-weight:700}.fila .btn{margin:0}
+#toast button{background:none;border:0;color:inherit;text-decoration:underline;font:inherit;font-weight:700;margin-left:10px;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:92%;text-align:center}
+#toast.ver{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Biblioteca</h1>
+  <p>Busca un libro, regístralo a un estudiante y entrégale su fecha de devolución.</p>
+</header>
+
+<div class="resumen" aria-live="polite"><span><b id="nLibres">0</b> disponibles</span><span><b id="nPrest">0</b> prestados</span><span><b id="nVenc">0</b> vencidos</span></div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" data-v="catalogo" aria-selected="true">Catálogo</button>
+  <button class="tab" role="tab" data-v="prestamos" id="tabPrest" aria-selected="false">Préstamos activos</button>
+</div>
+<section id="vCatalogo">
+<div class="barra">
+  <input id="buscar" type="search" placeholder="Buscar por título o autor" aria-label="Buscar libro">
+  <div class="chips" role="group" aria-label="Filtrar por estado">
+    <button class="chip" data-f="todos" aria-pressed="true">Todos</button>
+    <button class="chip" data-f="libres" aria-pressed="false">Disponibles</button>
+    <button class="chip" data-f="prestados" aria-pressed="false">Prestados</button>
+  </div>
+</div>
+
+<div class="barra">
+  <label class="sel">Categoría <select id="fCat"><option value="">Todas</option></select></label>
+  <label class="sel">Idioma <select id="fIdi"><option value="">Todos</option></select></label>
+  <button class="chip" id="limpiar" type="button">Limpiar filtros</button>
+  <span class="autor" id="cuenta" aria-live="polite"></span>
+</div>
+<ul id="catalogo"></ul>
+<nav id="paginacion" class="pag" aria-label="Páginas del catálogo"></nav>
+<p class="autor hint">Desliza hacia los lados para cambiar de página.</p>
+</section>
+<section id="vPrestamos" hidden>
+  <p class="autor">Primero los que vencen antes, para que nada se pase de fecha.</p>
+  <div id="listaPrest"></div>
+</section>
+
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" class="modal" id="frm" novalidate>
+    <h2 id="dTitulo">Prestar libro</h2>
+    <div class="autor" id="dAutor"></div>
+    <label for="nom">Nombre completo del estudiante</label>
+    <input type="text" id="nom" placeholder="Ej: Ana María Pérez" autocomplete="off">
+    <label for="est">Código del estudiante</label>
+    <input type="text" id="est" placeholder="Ej: 2024001" autocomplete="off">
+    <label for="dias">Días de préstamo</label>
+    <div class="dias"><span class="autor">Entre 1 y 15</span><output id="diasOut">7</output></div>
+    <input type="range" id="dias" min="1" max="15" value="7">
+    <div class="rapidos"><button type="button" class="chip" data-d="3">3</button><button type="button" class="chip" data-d="7">7</button><button type="button" class="chip" data-d="15">15</button></div>
+    <div class="sello"><small>Devolver el</small><strong id="fechaDev"></strong></div>
+    <p class="error" id="err" role="alert"></p>
+    <div class="acciones"><button type="button" class="btn sec" id="cancelar">Cancelar</button><button type="submit" class="btn" id="ok">Confirmar préstamo</button></div>
+  </form>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ===== LÓGICA (pura y testeable) =====
+const MAX_DIAS = 15;
+const crearBiblioteca = () => ({
+  libros: [
+    {id:1,titulo:"Cien años de soledad",autor:"Gabriel García Márquez",categoria:"Literatura",idioma:"Español",color:"#8a5a2b"},
+    {id:2,titulo:"Clean Code",autor:"Robert C. Martin",categoria:"Programación",idioma:"Inglés",color:"#2b5d8a"},
+    {id:3,titulo:"Introducción a los algoritmos",autor:"Cormen, Leiserson, Rivest, Stein",categoria:"Programación",idioma:"Inglés",color:"#6a3d8f"},
+    {id:4,titulo:"El principito",autor:"Antoine de Saint-Exupéry",categoria:"Literatura",idioma:"Español",color:"#1f6f5c"},
+    {id:5,titulo:"Ingeniería de software",autor:"Ian Sommerville",categoria:"Ingeniería de software",idioma:"Español",color:"#a33b3b"},
+    {id:6,titulo:"Cálculo de una variable",autor:"James Stewart",categoria:"Matemáticas",idioma:"Español",color:"#3d6b3d"},
+    {id:7,titulo:"La vorágine",autor:"José Eustasio Rivera",categoria:"Literatura",idioma:"Español",color:"#8a7a1f"},
+    {id:8,titulo:"Redes de computadoras",autor:"Andrew Tanenbaum",categoria:"Redes",idioma:"Español",color:"#2b7a8a"},
+    {id:9,titulo:"Álgebra lineal",autor:"Stanley Grossman",categoria:"Matemáticas",idioma:"Español",color:"#7a3d5a"},
+    {id:10,titulo:"The Pragmatic Programmer",autor:"Hunt y Thomas",categoria:"Programación",idioma:"Inglés",color:"#35506b"},
+    {id:11,titulo:"Pedro Páramo",autor:"Juan Rulfo",categoria:"Literatura",idioma:"Español",color:"#7a5a2b"},
+    {id:12,titulo:"Rayuela",autor:"Julio Cortázar",categoria:"Literatura",idioma:"Español",color:"#a0522d"},
+    {id:13,titulo:"Don Quijote de la Mancha",autor:"Miguel de Cervantes",categoria:"Literatura",idioma:"Español",color:"#6b4a2b"},
+    {id:14,titulo:"Frankenstein",autor:"Mary Shelley",categoria:"Literatura",idioma:"Inglés",color:"#4a4a6a"},
+    {id:15,titulo:"1984",autor:"George Orwell",categoria:"Literatura",idioma:"Inglés",color:"#8a2b2b"},
+    {id:16,titulo:"Fundamentos de bases de datos",autor:"Silberschatz, Korth y Sudarshan",categoria:"Bases de datos",idioma:"Español",color:"#2b6a6a"},
+    {id:17,titulo:"Sistemas de bases de datos",autor:"Elmasri y Navathe",categoria:"Bases de datos",idioma:"Español",color:"#3a5f8a"},
+    {id:18,titulo:"Python para todos",autor:"Charles Severance",categoria:"Programación",idioma:"Español",color:"#3d7a4a"},
+    {id:19,titulo:"Estructuras de datos y algoritmos en Java",autor:"Goodrich y Tamassia",categoria:"Programación",idioma:"Español",color:"#8a5a1f"},
+    {id:20,titulo:"Patrones de diseño",autor:"Gamma, Helm, Johnson y Vlissides",categoria:"Ingeniería de software",idioma:"Español",color:"#7a3d3d"},
+    {id:21,titulo:"Clean Architecture",autor:"Robert C. Martin",categoria:"Ingeniería de software",idioma:"Inglés",color:"#2b4a6a"},
+    {id:22,titulo:"Física universitaria",autor:"Sears y Zemansky",categoria:"Ciencias",idioma:"Español",color:"#1f6a8a"},
+    {id:23,titulo:"Química",autor:"Raymond Chang",categoria:"Ciencias",idioma:"Español",color:"#5a7a1f"},
+    {id:24,titulo:"Probabilidad y estadística para ingeniería y ciencias",autor:"Walpole, Myers y Myers",categoria:"Matemáticas",idioma:"Español",color:"#6a3d7a"},
+    {id:25,titulo:"Matemáticas discretas",autor:"Kenneth Rosen",categoria:"Matemáticas",idioma:"Español",color:"#8a4a6a"},
+    {id:26,titulo:"Inteligencia artificial: un enfoque moderno",autor:"Russell y Norvig",categoria:"Inteligencia artificial",idioma:"Español",color:"#3a3a7a"},
+  ],
+  prestamos: [] // {libroId, estudiante, desde, hasta, activo}
+});
+const sumarDias = (fecha, n) => { const d = new Date(fecha); d.setDate(d.getDate()+n); return d; };
+const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+function prestar(bib, libroId, codigo, nombre, dias, hoy = new Date()) {
+  codigo = String(codigo||"").trim(); nombre = String(nombre||"").trim().replace(/\s+/g," ");
+  if (!/^[\p{L}][\p{L} .'-]{1,59}$/u.test(nombre)) return {ok:false, campo:"nombre", error:"Escribe el nombre completo del estudiante, solo letras (mínimo 2)."};
+  if (!/^[A-Za-z0-9-]{4,15}$/.test(codigo)) return {ok:false, campo:"codigo", error:"El código debe tener entre 4 y 15 letras o números. Ej: 2024001."};
+  if (!Number.isInteger(dias) || dias < 1 || dias > MAX_DIAS) return {ok:false, campo:"dias", error:`Los días deben ser un entero entre 1 y ${MAX_DIAS}.`};
+  if (!bib.libros.some(l => l.id === libroId)) return {ok:false, error:"El libro no existe."};
+  if (bib.prestamos.some(p => p.libroId === libroId && p.activo)) return {ok:false, error:"El libro ya está prestado."};
+  const p = {libroId, estudiante: codigo, nombre, desde: fmt(hoy), hasta: fmt(sumarDias(hoy, dias)), activo:true};
+  bib.prestamos.push(p);
+  return {ok:true, prestamo:p};
+}
+function devolver(bib, libroId) {
+  const p = bib.prestamos.find(p => p.libroId === libroId && p.activo);
+  if (!p) return {ok:false, error:"Ese libro no está prestado."};
+  p.activo = false; return {ok:true};
+}
+const prestamoActivo = (bib, id) => bib.prestamos.find(p => p.libroId === id && p.activo);
+const norm = t => String(t).normalize("NFD").replace(/\p{M}/gu,"").toLowerCase();
+function filtrarLibros(bib, {q="", estado="todos", categoria="", idioma=""} = {}) {
+  const nq = norm(q.trim());
+  return bib.libros.filter(l => {
+    const prestado = !!prestamoActivo(bib, l.id);
+    if (estado==="libres" && prestado) return false;
+    if (estado==="prestados" && !prestado) return false;
+    if (categoria && l.categoria !== categoria) return false;
+    if (idioma && l.idioma !== idioma) return false;
+    return !nq || norm(l.titulo+" "+l.autor+" "+l.categoria).includes(nq);
+  });
+}
+const POR_PAGINA = 9;
+function paginar(lista, pagina, porPagina = POR_PAGINA) {
+  const total = Math.max(1, Math.ceil(lista.length / porPagina));
+  const pg = Math.min(Math.max(1, pagina), total), ini = (pg-1)*porPagina;
+  return {items: lista.slice(ini, ini+porPagina), pagina: pg, total, desde: lista.length ? ini+1 : 0, hasta: Math.min(ini+porPagina, lista.length)};
+}
+const activosOrdenados = bib => bib.prestamos.filter(p => p.activo).sort((a,b) => a.hasta.localeCompare(b.hasta));
+const diasRestantes = (hasta, hoy = new Date()) => Math.round((new Date(hasta+"T00:00:00") - new Date(fmt(hoy)+"T00:00:00")) / 86400000);
+
+// ===== INTERFAZ =====
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const quien = p => `${esc(p.nombre||"Estudiante")} (${esc(p.estudiante)})`;
+const bib = crearBiblioteca();
+let filtro = "todos", libroSel = null, pagina = 1, totalPag = 1;
+const bonita = s => new Date(s+"T00:00:00").toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"});
+
+// Guardado opcional en el navegador (si falla, la app sigue funcionando)
+try { const g = JSON.parse(localStorage.getItem("prestamos")||"null"); if (Array.isArray(g)) bib.prestamos = g; } catch(e) {}
+const guardar = () => { try { localStorage.setItem("prestamos", JSON.stringify(bib.prestamos)); } catch(e) {} };
+
+let tt;
+function aviso(t, deshacer){
+  const el=$("toast"); el.textContent=t;
+  if (deshacer) { const b=document.createElement("button"); b.textContent="Deshacer"; b.onclick=()=>{ deshacer(); el.classList.remove("ver"); }; el.append(b); }
+  el.classList.add("ver"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("ver"), deshacer?6000:3200);
+}
+function pintarPaginacion(pg) {
+  if (pg.total <= 1) { $("paginacion").innerHTML = ""; return; }
+  let h = `<button class="chip" data-pag="${pg.pagina-1}" ${pg.pagina===1?"disabled":""}>‹ Anterior</button>`;
+  for (let i=1; i<=pg.total; i++) h += `<button class="chip" data-pag="${i}" aria-label="Página ${i}" ${i===pg.pagina?'aria-current="page"':""}>${i}</button>`;
+  h += `<button class="chip" data-pag="${pg.pagina+1}" ${pg.pagina===pg.total?"disabled":""}>Siguiente ›</button>`;
+  $("paginacion").innerHTML = h;
+}
+function irA(n) {
+  if (n < 1 || n > totalPag || n === pagina) return;
+  pagina = n; pintar(); $("vCatalogo").scrollIntoView({block:"start"});
+}
+function pintarPrestamos() {
+  $("listaPrest").innerHTML = activosOrdenados(bib).map(p => {
+    const l = bib.libros.find(x => x.id===p.libroId), d = diasRestantes(p.hasta);
+    const cls = d<0 ? "vencido" : d<=2 ? "pronto" : "";
+    const txt = d<0 ? `Vencido hace ${-d} ${-d===1?'día':'días'}` : d===0 ? "Se devuelve hoy" : `Faltan ${d} ${d===1?'día':'días'}`;
+    return `<div class="fila ${cls}"><div class="datos"><div class="titulo">${esc(l.titulo)}</div><div class="autor">${quien(p)} · devolver el ${bonita(p.hasta)}</div></div><div class="cuando">${txt}</div><button class="btn sec" data-devolver="${l.id}">Registrar devolución</button></div>`;
+  }).join("") || `<p class="vacio">No hay préstamos activos. Ve al catálogo y presta un libro.</p>`;
+}
+
+function pintar() {
+  let libres=0, prest=0, venc=0;
+  bib.libros.forEach(l => { const p = prestamoActivo(bib,l.id); if(!p) libres++; else { prest++; if (diasRestantes(p.hasta)<0) venc++; } });
+  $("tabPrest").textContent=`Préstamos activos (${prest})`; pintarPrestamos();
+  $("nLibres").textContent=libres; $("nPrest").textContent=prest; $("nVenc").textContent=venc;
+
+  const lista = filtrarLibros(bib, {q:$("buscar").value, estado:filtro, categoria:$("fCat").value, idioma:$("fIdi").value});
+  const pg = paginar(lista, pagina); pagina = pg.pagina; totalPag = pg.total;
+  $("cuenta").textContent = lista.length ? `Mostrando ${pg.desde}–${pg.hasta} de ${lista.length} libros` : "Sin resultados";
+  pintarPaginacion(pg);
+  $("catalogo").innerHTML = pg.items.map(l => {
+    const p = prestamoActivo(bib,l.id);
+    let estado, boton;
+    if (!p) { estado = `<div class="estado libre">Disponible</div>`; boton = `<button class="btn" data-prestar="${l.id}">Prestar este libro</button>`; }
+    else {
+      const d = diasRestantes(p.hasta), v = d<0;
+      estado = `<div class="estado ${v?'vencido':'prestado'}">${v?`Vencido hace ${-d} ${-d===1?'día':'días'}`:d===0?'Se devuelve hoy':`Faltan ${d} ${d===1?'día':'días'}`}<small>${quien(p)} · devolver el ${bonita(p.hasta)}</small></div>`;
+      boton = `<button class="btn sec" data-devolver="${l.id}">Registrar devolución</button>`;
+    }
+    return `<li class="libro"><div class="lomo" style="background:${l.color}" aria-hidden="true">${esc(l.titulo[0])}</div><div class="info"><h2 class="titulo">${esc(l.titulo)}</h2><span class="autor">${esc(l.autor)}</span><span class="etiquetas"><span class="tag">${esc(l.categoria)}</span><span class="tag">${esc(l.idioma)}</span></span>${estado}${boton}</div></li>`;
+  }).join("") || `<li class="vacio">Ningún libro coincide. Prueba con otro título o quita el filtro.</li>`;
+}
+
+function actualizarSello() {
+  const d = Number($("dias").value);
+  $("diasOut").textContent = d + (d===1?" día":" días");
+  $("fechaDev").textContent = bonita(fmt(sumarDias(new Date(), d)));
+}
+function abrirPrestamo(id) {
+  libroSel = bib.libros.find(l => l.id===id);
+  $("dTitulo").textContent = libroSel.titulo; $("dAutor").textContent = libroSel.autor;
+  $("nom").value=""; $("est").value=""; $("dias").value=7; $("err").textContent=""; ["nom","est"].forEach(i => $(i).removeAttribute("aria-invalid"));
+  actualizarSello(); $("dlg").showModal(); $("nom").focus();
+}
+function confirmar(e) {
+  e.preventDefault();
+  ["nom","est"].forEach(i => $(i).removeAttribute("aria-invalid"));
+  const r = prestar(bib, libroSel.id, $("est").value, $("nom").value, Number($("dias").value));
+  if (!r.ok) {
+    $("err").textContent = r.error;
+    const campo = {nombre:"nom", codigo:"est", dias:"dias"}[r.campo];
+    if (campo) { $(campo).setAttribute("aria-invalid","true"); $(campo).focus(); }
+    return;
+  }
+  guardar(); $("dlg").close(); pintar();
+  aviso(`Préstamo registrado. Devolver el ${bonita(r.prestamo.hasta)}.`);
+}
+
+const accion = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.prestar) abrirPrestamo(Number(b.dataset.prestar));
+  if (b.dataset.devolver) { const l = bib.libros.find(l=>l.id===Number(b.dataset.devolver)); const p0 = prestamoActivo(bib,l.id); devolver(bib,l.id); guardar(); pintar();
+    aviso(`Devolución registrada: ${l.titulo}.`, () => { if (!prestamoActivo(bib,l.id)) { p0.activo = true; guardar(); pintar(); } }); }
+};
+$("catalogo").onclick = accion; $("listaPrest").onclick = accion;
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x===t));
+  $("vCatalogo").hidden = t.dataset.v !== "catalogo"; $("vPrestamos").hidden = t.dataset.v !== "prestamos";
+});
+document.querySelectorAll(".chips [data-f]").forEach(b => b.onclick = () => {
+  filtro = b.dataset.f; pagina = 1;
+  document.querySelectorAll(".chips [data-f]").forEach(x => x.setAttribute("aria-pressed", x===b));
+  pintar();
+});
+document.querySelectorAll(".rapidos [data-d]").forEach(b => b.onclick = () => { $("dias").value = b.dataset.d; actualizarSello(); });
+$("buscar").oninput = () => { pagina = 1; pintar(); };
+$("dias").oninput = actualizarSello;
+$("frm").onsubmit = confirmar;
+$("cancelar").onclick = () => $("dlg").close();
+$("paginacion").onclick = e => { const b = e.target.closest("button"); if (b && !b.disabled) irA(Number(b.dataset.pag)); };
+let tx = 0, ty = 0;
+$("catalogo").addEventListener("touchstart", e => { tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, {passive:true});
+$("catalogo").addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5*Math.abs(dy)) irA(pagina + (dx < 0 ? 1 : -1));
+}, {passive:true});
+const llenar = (id, campo) => { const v = [...new Set(bib.libros.map(l => l[campo]))].sort((a,b) => a.localeCompare(b,"es")); $(id).insertAdjacentHTML("beforeend", v.map(x => `<option>${esc(x)}</option>`).join("")); };
+llenar("fCat","categoria"); llenar("fIdi","idioma");
+$("fCat").onchange = $("fIdi").onchange = () => { pagina = 1; pintar(); };
+$("limpiar").onclick = () => {
+  $("buscar").value=""; $("fCat").value=""; $("fIdi").value=""; filtro="todos"; pagina=1;
+  document.querySelectorAll(".chips [data-f]").forEach(x => x.setAttribute("aria-pressed", x.dataset.f==="todos"));
+  pintar();
+};
+pintar();
+</script>
+</body>
+</html>
